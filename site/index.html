@@ -97,9 +97,10 @@
     <p class="lead">
       输入一个 UID，自动抓取该用户在 33OJ 任意数据域、<strong>任意年份</strong>的比赛成绩，
       输出平均分、排名、月度趋势、题位表现，并支持多人横向对比与报告导出。
+      <br /><span style="font-size:14.5px">本站内置了真实数据快照，<strong>打开即用，不需要任何后端。</strong></span>
     </p>
     <div class="btns">
-      <a class="btn primary" href="./app/">打开分析器 →</a>
+      <a class="btn primary" href="./app/">打开分析器（内置数据）→</a>
       <a class="btn" href="https://github.com/WangNoNo666/33oj-score-analyzer">GitHub 仓库</a>
       <a class="btn" href="https://github.com/WangNoNo666/33oj-score-analyzer#readme">使用文档</a>
     </div>
@@ -157,11 +158,22 @@ OJ_ALLOW_ORIGIN=https://wangnono666.github.io</code></pre>
     </div>
 
     <div class="card" style="margin-top:22px">
-      <h3>后端已经部署好了？</h3>
-      <p>把后端地址填进来，直接在本站打开分析器。</p>
+      <h3>本站可以直接用，不需要任何后端</h3>
+      <p>
+        页面里内置了几份真实数据的快照，点开就能看全部图表与明细，也能导出 CSV。
+        想分析别的用户，用下面的本地工具导出 JSON，直接拖进页面即可。
+      </p>
+      <div class="row">
+        <a class="btn primary" href="./app/">打开分析器（内置数据）→</a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>想要实时抓取？</h3>
+      <p>部署一个后端，就能在网页上填 UID 直接抓。或者本地运行（见上文 A 方案）。</p>
       <div class="row">
         <input type="text" id="api" placeholder="https://your-app.onrender.com" spellcheck="false" />
-        <button class="btn primary" id="go">打开分析器 →</button>
+        <button class="btn" id="go">连接后端</button>
       </div>
       <p style="margin-top:10px;font-size:12.5px">
         地址会存在浏览器本地，下次直接访问 <code>/app/</code> 也能用。

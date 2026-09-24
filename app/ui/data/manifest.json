@@ -1,0 +1,64 @@
+{
+ "generatedAt": "2026-09-24T12:33:04.922Z",
+ "domain": "TYOI",
+ "datasets": [
+  {
+   "id": "tyoi-2026",
+   "file": "tyoi-2026.json",
+   "domain": "TYOI",
+   "years": [
+    2026
+   ],
+   "label": "TYOI · 2026",
+   "contests": 69,
+   "users": [
+    {
+     "uid": 968,
+     "uname": "jmc123",
+     "average": 158,
+     "attended": 32
+    },
+    {
+     "uid": 1020,
+     "uname": "xihegudi",
+     "average": 107.48,
+     "attended": 33
+    },
+    {
+     "uid": 1041,
+     "uname": "2024王铂涵",
+     "average": 170.38,
+     "attended": 37
+    }
+   ]
+  },
+  {
+   "id": "tyoi-all",
+   "file": "tyoi-all.json",
+   "domain": "TYOI",
+   "years": "all",
+   "label": "TYOI · 全部年份",
+   "contests": 434,
+   "users": [
+    {
+     "uid": 968,
+     "uname": "jmc123",
+     "average": 120.93,
+     "attended": 109
+    },
+    {
+     "uid": 1020,
+     "uname": "xihegudi",
+     "average": 93.9,
+     "attended": 83
+    },
+    {
+     "uid": 1041,
+     "uname": "2024王铂涵",
+     "average": 122.22,
+     "attended": 97
+    }
+   ]
+  }
+ ]
+}

@@ -17,7 +17,9 @@
     "user": "node oj-user.mjs",
     "multi": "node oj-multi.mjs",
     "edge": "node start-edge.mjs",
-    "shortcut": "node make-shortcut.mjs"
+    "shortcut": "node make-shortcut.mjs",
+    "export-static": "node tools/export-static.mjs",
+    "test": "node test/selftest.mjs"
   },
   "keywords": [
     "33oj",

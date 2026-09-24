@@ -28,7 +28,7 @@ import { fileURLToPath } from 'node:url';
 import { resolveCookie, validateCookie, cookieFromRequest, looksLikeCookie, CDP_PORT } from '../lib/auth.mjs';
 import { DiskCache, MemoryCache, makeClient, listContests } from '../lib/scrape.mjs';
 import { availableYears, parseYears } from '../lib/years.mjs';
-import { runAnalysis } from '../lib/job.mjs';
+import { runAnalysis, toPublicResult } from '../lib/job.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
@@ -117,24 +117,7 @@ function finishJob(job, err) {
 }
 
 function publicResult(job) {
-  if (!job.result) return null;
-  return {
-    id: job.id,
-    domain: job.result.domain,
-    years: job.result.years,
-    tag: job.result.tag,
-    meta: job.result.meta,
-    files: job.result.files,
-    users: job.result.results.map((r) => ({
-      overview: r.overview,
-      byYear: r.byYear,
-      monthly: r.monthly,
-      byIndex: r.byIndex,
-      entries: r.entries,
-      missedCount: r.missed.length,
-      unavailable: r.unavailable,
-    })),
-  };
+  return toPublicResult(job.result, job.id);
 }
 
 function startJob(params, cookie) {

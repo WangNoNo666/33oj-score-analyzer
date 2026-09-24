@@ -150,18 +150,104 @@ function renderSessionCard(st, cloud) {
   };
 }
 
-/** 页面没有连上后端时（例如单独托管的前端）显示服务器地址输入。 */
-function renderServerPrompt(err) {
-  $('#session-body').innerHTML =
-    `<div class="errbox">${esc(err || '没有连接到后端服务')}</div>` +
-    `<div class="field" style="margin-top:12px">
-       <label>后端服务地址</label>
-       <input type="text" id="srv" placeholder="https://your-app.onrender.com" value="${esc(getApiBase())}" />
-       <div class="hint">填你部署好的后端地址（不带结尾斜杠）。也可以直接用 <code>?api=地址</code> 打开本页。</div>
-     </div>
-     <button class="btn sm" id="srv-save">连接</button>` +
+/* ============================ 离线模式 ============================ */
+
+let manifestCache = null;
+
+async function loadManifest() {
+  if (manifestCache !== null) return manifestCache;
+  try {
+    const r = await fetch('./data/manifest.json', { cache: 'no-store' });
+    manifestCache = r.ok ? await r.json() : null;
+  } catch {
+    manifestCache = null;
+  }
+  return manifestCache;
+}
+
+/** 打开一份内置（或拖入的）数据集，直接渲染结果。 */
+function showOfflineResult(data, title) {
+  if (!data || !Array.isArray(data.users) || !data.users.length) {
+    alert('这份数据里没有可用的用户结果');
+    return;
+  }
+  setPill($('#pill-mode'), true, data.offline === false ? '快照数据' : '内置数据');
+  setPill($('#pill-session'), null, title || '离线');
+  const pc = $('#progress-card');
+  if (pc) pc.style.display = 'none';
+  render(data);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+let lastOfflineErr = '';
+let currentOfflineLabel = '';
+
+async function loadDataset(file, label) {
+  try {
+    $('#session-body').innerHTML = '<div class="okbox">正在载入内置数据…</div>';
+    const r = await fetch('./data/' + file, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    currentOfflineLabel = label || file;
+    showOfflineResult(data, currentOfflineLabel);
+  } catch (e) {
+    alert('载入失败：' + e.message);
+  }
+  await renderOfflinePanel();
+}
+
+/** 页面没有连上后端时（GitHub Pages 上的前端、或后端挂了）显示的面板。 */
+async function renderServerPrompt(err) {
+  lastOfflineErr = err || '';
+  await renderOfflinePanel();
+}
+
+async function renderOfflinePanel() {
+  const box = $('#session-body');
+  const mf = await loadManifest();
+  const datasets = (mf && mf.datasets) || [];
+
+  const head = currentOfflineLabel
+    ? `<div class="okbox">✓ 正在查看：<b>${esc(currentOfflineLabel)}</b>（内置快照，非实时）</div>`
+    : `<div class="errbox">${esc(lastOfflineErr || '没有连接到后端服务')}</div>`;
+
+  const dsHtml = datasets.length
+    ? `<div class="field" style="margin-top:14px">
+         <label>内置数据（点开即看，不需要后端）</label>
+         <div class="dslist">
+           ${datasets
+             .map(
+               (d) =>
+                 `<button class="ds" data-file="${esc(d.file)}" data-label="${esc(d.label)}">
+                    <span class="ds-t">${esc(d.label)}</span>
+                    <span class="ds-s">${d.contests} 场 · ${d.users.map((u) => `${esc(u.uname)} ${u.average}`).join(' · ')}</span>
+                  </button>`
+             )
+             .join('')}
+         </div>
+         <div class="hint">生成于 ${esc((mf.generatedAt || '').slice(0, 10))}。数据是快照，不是实时抓取。</div>
+       </div>`
+    : `<div class="hint" style="margin-top:12px">这份部署里没有内置数据。</div>`;
+
+  box.innerHTML =
+    head +
+    dsHtml +
+    `<details class="help"><summary>连接你自己的后端 / 导入 JSON</summary>
+       <div class="field" style="margin-top:10px">
+         <label>后端服务地址</label>
+         <input type="text" id="srv" placeholder="https://your-app.onrender.com" value="${esc(getApiBase())}" />
+       </div>
+       <button class="btn sm" id="srv-save">连接</button>
+       <div class="help-note" style="margin-top:10px">
+         也可以把本地导出的 JSON 文件直接<b>拖进本页</b>查看。
+         <br>导出方式：<code>node oj-user.mjs 1041 --json</code>
+       </div>
+     </details>` +
     COOKIE_HELP;
 
+  for (const b of box.querySelectorAll('.ds')) {
+    b.onclick = () => loadDataset(b.dataset.file, b.dataset.label);
+  }
   $('#srv-save').onclick = async () => {
     const v = ($('#srv').value || '').trim();
     if (!v) { setApiBase(''); return refreshStatus(); }
@@ -334,6 +420,93 @@ function onDone(result) {
   render(result);
 }
 
+/* ---------- 离线模式下的 CSV 导出（纯前端生成，不需要后端） ---------- */
+
+const csvEsc = (v) => {
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+const toCsv = (rows) =>
+  rows.length ? '\uFEFF' + [Object.keys(rows[0]).join(','), ...rows.map((r) => Object.values(r).map(csvEsc).join(','))].join('\r\n') : '';
+const blobUrl = (text) => URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+const dayOf = (ts) => new Date(ts * 1000).toLocaleDateString('zh-CN');
+
+function buildOfflineFiles(r) {
+  const out = [];
+  for (const u of r.users) {
+    const o = u.overview;
+    const base = `${o.uname}-${o.uid}`;
+    out.push({
+      name: `${base}-逐场明细.csv`,
+      kind: 'csv',
+      url: blobUrl(
+        toCsv(
+          [...u.entries].sort((a, b) => a.begin - b.begin).map((e) => ({
+            日期: dayOf(e.begin), 年份: e.year, 比赛名称: e.title, 得分: e.score,
+            排名: e.rank ?? '', 参赛人数: e.fieldSize, 全场平均分: e.fieldAvg,
+            全场中位数: e.fieldMed, 全场最高分: e.fieldMax, 与均分差: e.delta,
+            击败率百分比: e.beatRate ?? '',
+          }))
+        )
+      ),
+    });
+    out.push({
+      name: `${base}-每题得分.csv`,
+      kind: 'csv',
+      url: blobUrl(
+        toCsv(
+          u.entries.map((e) => ({
+            日期: dayOf(e.begin), 比赛名称: e.title,
+            ...Object.fromEntries(e.problems.map((v, i) => [e.problemsMeta[i]?.label || `T${i + 1}`, v ?? ''])),
+            总分: e.score,
+          }))
+        )
+      ),
+    });
+  }
+  if (r.users.length > 1) {
+    const ordered = [];
+    const seen = new Set();
+    for (const u of r.users) for (const e of u.entries) if (!seen.has(e.tid)) { seen.add(e.tid); ordered.push(e); }
+    ordered.sort((a, b) => a.begin - b.begin);
+    out.push({
+      name: '多人成绩对照表.csv',
+      kind: 'csv',
+      url: blobUrl(
+        toCsv(
+          ordered.map((e) => {
+            const row = { 日期: dayOf(e.begin), 比赛名称: e.title, 参赛人数: e.fieldSize };
+            for (const u of r.users) {
+              const x = u.entries.find((y) => y.tid === e.tid);
+              row[`${u.overview.uname}_分数`] = x ? x.score : '';
+              row[`${u.overview.uname}_排名`] = x ? (x.rank ?? '') : '';
+            }
+            return row;
+          })
+        )
+      ),
+    });
+    out.push({
+      name: '总览汇总.csv',
+      kind: 'csv',
+      url: blobUrl(
+        toCsv(
+          r.users.map((u) => {
+            const o = u.overview;
+            return {
+              用户: o.uname, UID: o.uid, 比赛总数: o.contestsTotal, 参赛场次: o.attended,
+              参赛率: o.participationRate + '%', 总分: o.total, 平均分: o.average,
+              中位数: o.median, 标准差: o.stdev, 最高分: o.max, 最低分: o.min,
+              平均排名: o.rankAvg ?? '', 最好排名: o.rankBest ?? '', 平均击败率: o.beatAvg ?? '',
+            };
+          })
+        )
+      ),
+    });
+  }
+  return out;
+}
+
 /* ============================ 渲染 ============================ */
 
 function render(r) {
@@ -343,16 +516,26 @@ function render(r) {
   if (w) w.style.display = 'none';
 
   /* --- 文件 --- */
-  if (r.files && r.files.length) {
+  const files =
+    r.files && r.files.length
+      ? r.files.map((f) => ({ ...f, url: `${getApiBase()}/api/jobs/${encodeURIComponent(r.id)}/files/${encodeURIComponent(f.name)}` }))
+      : r.offline
+      ? buildOfflineFiles(r)
+      : [];
+
+  if (files.length) {
     const card = document.createElement('div');
     card.className = 'card';
-    card.innerHTML = `<h2>下载报告</h2><div class="files">${r.files
-      .map(
-        (f) =>
-          `<a class="file" href="${esc(getApiBase())}/api/jobs/${encodeURIComponent(r.id)}/files/${encodeURIComponent(f.name)}" download>` +
-          `<span class="ic">${f.kind === 'markdown' ? '📄' : '📊'}</span><span>${esc(f.name)}</span></a>`
-      )
-      .join('')}</div>`;
+    card.innerHTML =
+      `<h2>下载报告</h2>` +
+      (r.offline ? `<div class="hint" style="margin-bottom:10px">离线数据，CSV 由浏览器现场生成。</div>` : '') +
+      `<div class="files">${files
+        .map(
+          (f) =>
+            `<a class="file" href="${esc(f.url)}" download="${esc(f.name)}">` +
+            `<span class="ic">${f.kind === 'markdown' ? '📄' : '📊'}</span><span>${esc(f.name)}</span></a>`
+        )
+        .join('')}</div>`;
     host.appendChild(card);
   }
 
@@ -571,6 +754,34 @@ function lineChart(labels, values, unit) {
 
 $('#run').onclick = run;
 $('#domain').onchange = () => { selectedYears.clear(); loadYears(); };
+
+/* 把导出的 JSON 直接拖进页面查看 */
+let dragDepth = 0;
+const dropOverlay = () => $('#drop');
+
+document.addEventListener('dragenter', (e) => {
+  if (!e.dataTransfer || ![...e.dataTransfer.types].includes('Files')) return;
+  e.preventDefault();
+  if (++dragDepth === 1) dropOverlay().classList.add('on');
+});
+document.addEventListener('dragover', (e) => { if (e.dataTransfer) e.preventDefault(); });
+document.addEventListener('dragleave', () => {
+  if (--dragDepth <= 0) { dragDepth = 0; dropOverlay().classList.remove('on'); }
+});
+document.addEventListener('drop', async (e) => {
+  if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+  e.preventDefault();
+  dragDepth = 0;
+  dropOverlay().classList.remove('on');
+  const file = e.dataTransfer.files[0];
+  try {
+    const data = JSON.parse(await file.text());
+    currentOfflineLabel = file.name;
+    showOfflineResult(data, file.name);
+  } catch (err) {
+    alert('解析失败：不是合法的 JSON 文件\n' + err.message);
+  }
+});
 
 refreshStatus();
 // 卡住时自动重试的轮询；正在跑作业时不动，免得刷掉进度

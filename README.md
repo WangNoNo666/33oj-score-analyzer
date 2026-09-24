@@ -46,10 +46,42 @@ node oj-multi.mjs 968 1020 1041 --years 2026   :: 多人对比
 | `--no-title-year` | 不按标题兜底归属年份 | 关 |
 | `--json` | 额外输出完整 JSON | 关 |
 
-### 在线部署
+### 发布成网站
 
-后端可以部署到任何支持 Docker 的平台，前端继续放在 GitHub Pages 上。
-**完整的分步教程见 [部署指南](部署指南.md)**（GitHub + Render，全免费）。
+三种方式，**全都是免费的**。按「省事程度」排序：
+
+#### 方案 1：纯静态（推荐，零成本零维护）
+
+把分析结果固化成一份数据文件，Pages 直接展示。**不需要任何后端、不需要注册任何平台、没有冷启动。**
+
+```bash
+node tools/export-static.mjs                    # 默认导出三人的 2026 + 全部年份
+node tools/export-static.mjs --uids 968,1020 --years 2024-2026
+git add -A && git commit -m "data: 更新数据" && git push
+```
+
+数据落在 `app/ui/data/`，推送后 Pages 自动更新。
+网站打开就有完整图表、逐场明细，CSV 由浏览器现场生成。
+
+> 代价：数据是**快照**，不是实时抓取。想更新就重跑一次上面的命令。
+> 如果你要的就是「看看这几个人考得怎么样」，这个方案最合适。
+
+#### 方案 2：本地运行（实时，最灵活）
+
+就是[快速开始](#本地运行推荐功能最全)那套。凭据不出本机，也没有任何费用，只是别人访问不到。
+
+#### 方案 3：在线后端（实时，需要平台）
+
+想让**任何人**打开网页就能填 UID 实时抓取，就得有个后端。
+完整教程见 **[部署指南](部署指南.md)**（GitHub + Render）。
+
+```bash
+# Render 直接读 render.yaml；Fly.io / Railway / 任何 Docker 平台同理
+OJ_MODE=cloud
+OJ_ALLOW_ORIGIN=https://yourname.github.io
+```
+
+> 免费套餐通常会闲置休眠，首次访问要等几十秒唤醒；而且用户得把自己的 OJ Cookie 交给这台服务器。
 
 ```bash
 # Render：直接读 render.yaml，一键部署
@@ -142,14 +174,17 @@ docker build -t 33oj . && docker run -p 8788:8788 33oj   # 或自己来
 创建桌面快捷方式.cmd
 start-edge.cmd          启动带调试端口的 Edge
 run.cmd                 命令行入口
+推送-GitHub.cmd          一键推送到 GitHub
 
 oj-user.mjs             单用户 CLI
 oj-multi.mjs            多用户 CLI
 start-edge.mjs          启动 Edge（真正干活的那个）
 make-shortcut.mjs       创建桌面快捷方式
+push-github.mjs         推送脚本
 
 app/server.mjs          本地/在线服务（零依赖）
 app/ui/                 界面（HTML / CSS / JS）
+app/ui/data/            固化的成绩数据（纯静态站点用）
 
 lib/auth.mjs            会话获取（CDP / 用户提供）与校验
 lib/scrape.mjs          HTTP + 自适应限流、比赛列表与成绩表解析、缓存
@@ -157,6 +192,7 @@ lib/years.mjs           年份解析与归属
 lib/analyze.mjs         统计计算与 Markdown 渲染
 lib/job.mjs             作业引擎（界面与命令行共用）
 
+tools/export-static.mjs 把分析结果导出成静态数据
 test/selftest.mjs       纯函数自测（不联网，CI 里跑）
 site/                   GitHub Pages 落地页
 .github/workflows/      CI + Pages 部署
