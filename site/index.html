@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>33OJ 成绩分析器</title>
+<meta name="description" content="输入 UID，自动抓取 33OJ 用户在任意年份的比赛成绩，输出平均分、排名、月度趋势、题位表现，支持多年份与多人对比。" />
+<style>
+  :root{
+    --bg:#0e1116; --bg2:#151a21; --panel:#171d25; --panel2:#1d242e;
+    --border:#272f3a; --border2:#333d4a; --text:#e6edf3; --muted:#8b98a8;
+    --accent:#4c8dff; --accent2:#6ea8ff; --ok:#3fb950;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font:15px/1.7 "Segoe UI","Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif;
+  }
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+
+  header{
+    padding:74px 0 56px;
+    background:
+      radial-gradient(900px 380px at 22% -12%, rgba(76,141,255,.20), transparent 62%),
+      radial-gradient(700px 320px at 88% 0%, rgba(126,224,161,.10), transparent 60%);
+    border-bottom:1px solid var(--border);
+  }
+  h1{font-size:40px;line-height:1.25;margin:0 0 14px;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);max-width:640px;margin:0 0 30px}
+  .btns{display:flex;flex-wrap:wrap;gap:12px}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:12px 22px;border-radius:9px;border:1px solid var(--border2);
+    background:var(--panel2);color:var(--text);font-weight:600;font-size:14.5px;
+  }
+  .btn:hover{text-decoration:none;border-color:var(--accent)}
+  .btn.primary{background:linear-gradient(180deg,var(--accent2),var(--accent));border-color:#3b7ce0;color:#06121f}
+  .btn.primary:hover{filter:brightness(1.08)}
+
+  section{padding:52px 0;border-bottom:1px solid var(--border)}
+  h2{font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin:0 0 24px;font-weight:650}
+  h3{font-size:17px;margin:0 0 8px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .card{
+    background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:20px;
+  }
+  .card p{margin:0;color:var(--muted);font-size:14px}
+  .card .ico{font-size:20px;margin-bottom:10px;display:block}
+
+  pre{
+    background:#0b0e13;border:1px solid var(--border);border-radius:9px;
+    padding:14px 16px;overflow:auto;font-size:13px;line-height:1.7;
+    font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;
+  }
+  code{font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;font-size:.92em;
+    background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+  pre code{background:none;border:none;padding:0}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--border);text-align:left}
+  th{color:var(--muted);font-weight:500;font-size:12.5px}
+
+  .note{
+    background:#241f14;border:1px solid #5a4a1f;color:#f0d597;
+    padding:13px 16px;border-radius:9px;font-size:13.5px;
+  }
+  .warn{
+    background:#241a19;border:1px solid #5a2b28;color:#ffc4c0;
+    padding:13px 16px;border-radius:9px;font-size:13.5px;
+  }
+  .ok{background:#16241a;border:1px solid #2c4a33;color:#b7e3bd;padding:13px 16px;border-radius:9px;font-size:13.5px}
+
+  ul{padding-left:20px;color:var(--muted)}
+  ul li{margin:5px 0}
+
+  img.preview{width:100%;border-radius:11px;border:1px solid var(--border);display:block;margin-top:18px}
+
+  footer{padding:40px 0 60px;color:#5b6675;font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>33OJ 成绩分析器</h1>
+    <p class="lead">
+      输入一个 UID，自动抓取该用户在 33OJ 任意数据域、<strong>任意年份</strong>的比赛成绩，
+      输出平均分、排名、月度趋势、题位表现，并支持多人横向对比与报告导出。
+    </p>
+    <div class="btns">
+      <a class="btn primary" href="./app/">打开分析器 →</a>
+      <a class="btn" href="https://github.com/WangNoNo666/33oj-score-analyzer">GitHub 仓库</a>
+      <a class="btn" href="https://github.com/WangNoNo666/33oj-score-analyzer#readme">使用文档</a>
+    </div>
+    <img class="preview" src="./preview.png" alt="分析结果界面预览"
+         onerror="this.style.display='none'" />
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>它能做什么</h2>
+    <div class="grid">
+      <div class="card"><span class="ico">📊</span><h3>总览统计</h3>
+        <p>参赛场次、参赛率、总分、平均分（三种口径）、中位数、标准差、最高最低分、零分场次。</p></div>
+      <div class="card"><span class="ico">🏆</span><h3>排名分析</h3>
+        <p>平均排名、最好最差名次、平均击败率、每场与全场平均分的差值。</p></div>
+      <div class="card"><span class="ico">📅</span><h3>多年份</h3>
+        <p>支持 <code>2024-2026</code>、<code>all</code> 等写法，给出分年份 × 分用户的平均分对照与柱状图。</p></div>
+      <div class="card"><span class="ico">📈</span><h3>月度趋势</h3>
+        <p>按月统计场次与平均分，一眼看出进步或滑坡。</p></div>
+      <div class="card"><span class="ico">🎯</span><h3>题位表现</h3>
+        <p>把各场比赛的 T1/T2/… 对齐，算出「相对全场」倍率，定位强项与弱项。</p></div>
+      <div class="card"><span class="ico">📥</span><h3>报告导出</h3>
+        <p>一键下载 Markdown 报告与逐场明细 / 每题得分 / 汇总 CSV。</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>两种用法</h2>
+
+    <h3 style="margin-top:0">A. 本地运行（推荐，功能最全）</h3>
+    <p style="color:var(--muted);font-size:14px">
+      本机跑一个零依赖的 Node 服务，图形界面直接开在浏览器里。会话从你本机已登录的 Edge 自动获取，
+      不用手动填任何凭据。
+    </p>
+<pre><code>git clone https://github.com/WangNoNo666/33oj-score-analyzer.git
+cd 33oj-score-analyzer
+start-edge.cmd      :: 启动一个带调试端口的 Edge，登录一次
+启动-OJ成绩分析器.cmd  :: 打开图形界面</code></pre>
+
+    <h3 style="margin-top:34px">B. 在线部署（服务器端抓取）</h3>
+    <p style="color:var(--muted);font-size:14px">
+      把后端部署到任何支持 Docker 的平台（Render / Railway / Fly.io…），
+      前端可以继续放在 GitHub Pages 上。
+    </p>
+<pre><code># 平台会读取仓库里的 render.yaml / fly.toml / railway.json
+# 关键环境变量：
+OJ_MODE=cloud
+OJ_ALLOW_ORIGIN=https://wangnono666.github.io</code></pre>
+    <div class="note" style="margin-top:16px">
+      部署完把 <code>OJ_ALLOW_ORIGIN</code> 改成你的前端地址；前端也可以用
+      <code>?api=https://你的后端</code> 直接指定后端。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>安全说明</h2>
+    <div class="ok">
+      本站<strong>没有服务器保存你的任何凭据</strong>。在线模式只做一件事：
+      拿你填的 Cookie 去请求 <code>oj.33dai.cn</code>，请求结束即丢弃，不写磁盘、不记日志
+      （异常信息里的 Cookie 也会被打码）。页面侧只放在 <code>sessionStorage</code>，关掉标签页就没了。
+    </div>
+    <div class="warn" style="margin-top:14px">
+      但请注意：Cookie 等同于你的登录凭证。填给任何第三方服务之前都应该想清楚 ——
+      更稳妥的做法是<strong>本地运行</strong>。用完随时可以在 OJ 上退出登录让 Cookie 失效。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>实现要点</h2>
+    <ul>
+      <li><strong>零第三方依赖</strong>：只用 Node 内置模块，不需要 <code>npm install</code>。</li>
+      <li><strong>会话获取</strong>：33OJ 是私有域，且 Edge 用 App-Bound Encryption 保护 Cookie，
+        磁盘上的 Cookie 复制到别的配置目录也解不开 —— 所以通过 DevTools 协议向运行中的 Edge 索取。</li>
+      <li><strong>自适应限流</strong>：OJ 在请求过快时会返回 403。客户端会匀速放行、识别突发 403 并指数退避，
+        同时区分「真被限流」和「这张成绩表本来就锁着」，避免统计结果悄悄少算比赛。</li>
+      <li><strong>年份归属</strong>：优先用 <code>beginAt</code>；时间戳年份不在所选范围内但标题含该年份时按标题兜底并标注
+        （OJ 上确实存在把 2026 录成 2036 的比赛）。</li>
+      <li><strong>界面</strong>：原生 HTML/CSS/JS + SVG 图表，同一套代码既能被后端托管，也能单独部署到 Pages。</li>
+    </ul>
+  </div>
+</section>
+
+<section style="border-bottom:none">
+  <div class="wrap">
+    <h2>数据来源</h2>
+    <p style="color:var(--muted);font-size:14px">
+      数据全部来自 <a href="https://oj.33dai.cn/">oj.33dai.cn</a>（33OJ，Hydro 内核）。
+      本项目只是把公开可读的成绩页面整理成便于分析的报表，不存储、不传播任何用户数据。
+    </p>
+  </div>
+</section>
+
+<footer>
+  MIT License · <a href="https://github.com/WangNoNo666/33oj-score-analyzer">WangNoNo666/33oj-score-analyzer</a>
+</footer>
+
+</body>
+</html>

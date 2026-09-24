@@ -1,0 +1,21 @@
+# Render 一键部署配置（https://render.com）
+#
+# 用 Docker 运行时，免费套餐即可。
+# 部署完把 OJ_ALLOW_ORIGIN 改成你的 GitHub Pages 地址，
+# 这样 Pages 上的前端才能跨域调用这个后端。
+services:
+  - type: web
+    name: 33oj-score-analyzer
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/status
+    envVars:
+      - key: OJ_MODE
+        value: cloud
+      - key: OJ_NO_OPEN
+        value: "1"
+      - key: OJ_ALLOW_ORIGIN
+        value: https://wangnono666.github.io
+      - key: OJ_JOB_TTL_MS
+        value: "7200000"

@@ -1,0 +1,23 @@
+# Fly.io 部署配置（https://fly.io）
+# 用法: fly launch --no-deploy 然后 fly deploy
+app = "33oj-score-analyzer"
+primary_region = "hkg"   # 香港，离国内近一些
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  OJ_MODE = "cloud"
+  OJ_NO_OPEN = "1"
+  OJ_GUI_PORT = "8788"
+
+[http_service]
+  internal_port = 8788
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

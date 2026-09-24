@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 语法检查
+        run: |
+          set -e
+          for f in oj-user.mjs oj-multi.mjs start-edge.mjs make-shortcut.mjs \
+                   app/server.mjs lib/*.mjs; do
+            echo "check $f"
+            node --check "$f"
+          done
+
+      - name: 纯函数自测（解析 / 年份 / 统计）
+        run: node test/selftest.mjs

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>33OJ 成绩分析器</title>
+<meta name="description" content="抓取并分析 33OJ 用户在任意年份的比赛成绩：平均分、排名、月度趋势、题位表现。" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo"><span class="dot"></span>33OJ 成绩分析器</div>
+  <div class="spacer"></div>
+  <span class="pill" id="pill-mode"><span class="dot"></span><span>…</span></span>
+  <span class="pill" id="pill-session"><span class="dot"></span><span>检测中…</span></span>
+</header>
+
+<div class="wrap">
+
+  <!-- ================= 左：设置 ================= -->
+  <div>
+    <div class="card">
+      <h2>会话</h2>
+      <div id="session-body">正在检测…</div>
+    </div>
+
+    <div class="card">
+      <h2>查询设置</h2>
+
+      <div class="field">
+        <label>数据域</label>
+        <select id="domain">
+          <option value="TYOI">TYOI</option>
+          <option value="GXOI">GXOI</option>
+          <option value="XZOI">XZOI</option>
+          <option value="JDOI">JDOI</option>
+          <option value="BHOI">BHOI</option>
+          <option value="TEST33">TEST33</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>用户 UID</label>
+        <textarea id="uids" placeholder="一个或多个，用逗号/空格分隔&#10;例如：968, 1020, 1041"></textarea>
+        <div class="hint">UID 是数字，可在 OJ 个人主页地址栏 /user/<b>1041</b> 里看到。</div>
+      </div>
+
+      <div class="field">
+        <label>年份 <span id="years-note" class="hint"></span></label>
+        <div class="chips" id="years"></div>
+        <div class="hint">不选 = 全部年份。可多选。</div>
+      </div>
+
+      <div class="field">
+        <label>并发数</label>
+        <input type="number" id="concurrency" value="5" min="1" max="12" />
+        <div class="hint">越大越快，但更容易被限流。建议 4–8。</div>
+      </div>
+
+      <div class="field">
+        <label class="check"><input type="checkbox" id="titleFallback" checked /> 按标题兜底归属年份</label>
+        <label class="check"><input type="checkbox" id="noCache" /> 强制刷新（忽略缓存）</label>
+      </div>
+
+      <button class="btn primary" id="run">开始分析</button>
+    </div>
+  </div>
+
+  <!-- ================= 右：结果 ================= -->
+  <div>
+    <div class="card" id="progress-card" style="display:none">
+      <h2>进度</h2>
+      <div class="progress-line"><span id="stage-text">准备中…</span><span id="stage-count"></span></div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="card" id="welcome-card">
+      <h2>怎么用</h2>
+      <ol style="color:var(--muted);font-size:13px;line-height:1.9;padding-left:20px;margin:0">
+        <li>在上面确认会话可用（左上角会显示状态）。</li>
+        <li>填 UID（支持多人，逗号分隔），勾选要统计的年份。</li>
+        <li>点「开始分析」，进度会实时刷新。</li>
+        <li>完成后下方会给出总览、分年份对比、月度趋势、题位表现和逐场明细，并可下载报告。</li>
+      </ol>
+    </div>
+
+    <div id="results"></div>
+  </div>
+</div>
+
+<div class="foot">33OJ 成绩分析器 · 数据来自 oj.33dai.cn</div>
+
+<script src="app.js"></script>
+</body>
+</html>

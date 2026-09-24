@@ -1,0 +1,12 @@
+node_modules
+out
+dist
+.cache
+.edge-oj
+.git
+.github
+docs
+site
+_*.mjs
+_*.png
+*.log

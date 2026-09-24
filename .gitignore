@@ -1,0 +1,22 @@
+# 依赖与产物
+node_modules/
+out/
+dist/
+
+# 运行时缓存（含会话 cookie，绝不能提交）
+.cache/
+*.log
+
+# 本地启动 Edge 用的独立配置文件
+.edge-oj/
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# 一次性调试脚本
+_*.mjs
+_*.png

@@ -1,0 +1,51 @@
+{
+  "name": "33oj-score-analyzer",
+  "version": "1.0.0",
+  "description": "抓取并分析 33OJ（oj.33dai.cn）用户在任意年份的比赛成绩：平均分、排名、月度趋势、题位表现，支持多年份与多人对比。",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "oj-user": "./oj-user.mjs",
+    "oj-multi": "./oj-multi.mjs"
+  },
+  "scripts": {
+    "start": "node app/server.mjs",
+    "user": "node oj-user.mjs",
+    "multi": "node oj-multi.mjs",
+    "edge": "node start-edge.mjs",
+    "shortcut": "node make-shortcut.mjs"
+  },
+  "keywords": [
+    "33oj",
+    "hydro",
+    "oj",
+    "oi",
+    "score",
+    "analysis",
+    "competitive-programming"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WangNoNo666/33oj-score-analyzer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/WangNoNo666/33oj-score-analyzer/issues"
+  },
+  "homepage": "https://wangnono666.github.io/33oj-score-analyzer/",
+  "dependencies": {},
+  "files": [
+    "app",
+    "lib",
+    "oj-user.mjs",
+    "oj-multi.mjs",
+    "start-edge.mjs",
+    "make-shortcut.mjs",
+    "*.cmd",
+    "README.md",
+    "LICENSE"
+  ]
+}
