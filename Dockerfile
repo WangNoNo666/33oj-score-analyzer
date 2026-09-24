@@ -21,7 +21,8 @@ USER app
 
 EXPOSE 8788
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:'+(process.env.OJ_GUI_PORT||8788)+'/api/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+# 平台通常会注入 PORT，这里跟着走
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "const p=process.env.PORT||process.env.OJ_GUI_PORT||8788;fetch('http://127.0.0.1:'+p+'/api/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["node", "app/server.mjs"]

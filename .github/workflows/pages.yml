@@ -35,6 +35,8 @@ jobs:
           find dist -type f | sort
 
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true   # 仓库没开 Pages 时自动开，省得手动去 Settings 点
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

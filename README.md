@@ -49,6 +49,7 @@ node oj-multi.mjs 968 1020 1041 --years 2026   :: 多人对比
 ### 在线部署
 
 后端可以部署到任何支持 Docker 的平台，前端继续放在 GitHub Pages 上。
+**完整的分步教程见 [部署指南](部署指南.md)**（GitHub + Render，全免费）。
 
 ```bash
 # Render：直接读 render.yaml，一键部署
@@ -186,7 +187,6 @@ Dockerfile …            Render / Fly.io / Railway 配置
 ---
 
 ## 数据来源与免责
-
 数据来自 [oj.33dai.cn](https://oj.33dai.cn/)（33OJ，Hydro 内核）公开可读的成绩页面。
 本项目只是把页面整理成便于分析的报表，不存储、不传播用户数据，与 33OJ 官方无关。
 

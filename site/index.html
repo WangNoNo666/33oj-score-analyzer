@@ -76,6 +76,14 @@
   ul{padding-left:20px;color:var(--muted)}
   ul li{margin:5px 0}
 
+  input[type=text]{
+    flex:1;min-width:250px;padding:11px 14px;border-radius:9px;
+    background:#0b0e13;border:1px solid var(--border2);color:var(--text);
+    font:14px/1.4 ui-monospace,Consolas,monospace;outline:none;
+  }
+  input[type=text]:focus{border-color:var(--accent)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+
   img.preview{width:100%;border-radius:11px;border:1px solid var(--border);display:block;margin-top:18px}
 
   footer{padding:40px 0 60px;color:#5b6675;font-size:13px;text-align:center}
@@ -147,6 +155,18 @@ OJ_ALLOW_ORIGIN=https://wangnono666.github.io</code></pre>
       部署完把 <code>OJ_ALLOW_ORIGIN</code> 改成你的前端地址；前端也可以用
       <code>?api=https://你的后端</code> 直接指定后端。
     </div>
+
+    <div class="card" style="margin-top:22px">
+      <h3>后端已经部署好了？</h3>
+      <p>把后端地址填进来，直接在本站打开分析器。</p>
+      <div class="row">
+        <input type="text" id="api" placeholder="https://your-app.onrender.com" spellcheck="false" />
+        <button class="btn primary" id="go">打开分析器 →</button>
+      </div>
+      <p style="margin-top:10px;font-size:12.5px">
+        地址会存在浏览器本地，下次直接访问 <code>/app/</code> 也能用。
+      </p>
+    </div>
   </div>
 </section>
 
@@ -194,6 +214,33 @@ OJ_ALLOW_ORIGIN=https://wangnono666.github.io</code></pre>
 <footer>
   MIT License · <a href="https://github.com/WangNoNo666/33oj-score-analyzer">WangNoNo666/33oj-score-analyzer</a>
 </footer>
+
+<script>
+  // 后端地址 -> 拼出带 ?api= 的分析器链接
+  (function () {
+    var KEY = 'oj.api';
+    var input = document.getElementById('api');
+    var go = document.getElementById('go');
+    try { input.value = localStorage.getItem(KEY) || ''; } catch (e) {}
+
+    function open() {
+      var v = (input.value || '').trim().replace(/\/+$/, '');
+      if (v && !/^https?:\/\//i.test(v)) { alert('地址要以 http:// 或 https:// 开头'); return; }
+      try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {}
+      location.href = './app/' + (v ? '?api=' + encodeURIComponent(v) : '');
+    }
+    go.addEventListener('click', open);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') open(); });
+
+    // 首页那个「打开分析器」也带上已保存的后端地址
+    var hero = document.querySelector('a.btn.primary[href="./app/"]');
+    if (hero) {
+      var saved = '';
+      try { saved = localStorage.getItem(KEY) || ''; } catch (e) {}
+      if (saved) hero.href = './app/?api=' + encodeURIComponent(saved);
+    }
+  })();
+</script>
 
 </body>
 </html>
